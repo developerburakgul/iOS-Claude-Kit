@@ -1,0 +1,3 @@
+# Personal klasörü Git'e gitmesin
+personal/*
+!personal/.gitkeep
