@@ -1,3 +1,9 @@
 # Personal klasörü Git'e gitmesin
 personal/*
 !personal/.gitkeep
+
+# Kit geliştirme sırasında kullanılan local settings
+.claude/settings.local.json
+
+# Kit'i kullanan projelerin CLAUDE.md'si
+CLAUDE.md

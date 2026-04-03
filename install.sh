@@ -1,17 +1,51 @@
 #!/bin/bash
-# Klonladıktan sonra: bash ~/.ios-claude-kit/install.sh
+# install.sh
 
 KIT="$HOME/.ios-claude-kit"
 
-# Hook'ları executable yap
-chmod +x "$KIT"/hooks/**/*.sh
-chmod +x "$KIT/bin/setup-project.sh"
+echo "🚀 iOS Claude Kit kuruluyor..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-# Shell alias ekle (.zshrc'ye)
-ALIAS_LINE='alias ios-kit="bash $HOME/.ios-claude-kit/bin/ios-kit.sh"'
-if ! grep -q "ios-kit" "$HOME/.zshrc" 2>/dev/null; then
-  echo "\n# iOS Claude Kit\n$ALIAS_LINE" >> "$HOME/.zshrc"
-  echo "✅ alias eklendi → ios-kit"
+# 1. Hook'lara execute permission ver
+chmod +x "$KIT"/core/hooks/**/*.sh 2>/dev/null
+echo "✅ Hook izinleri verildi"
+
+# 2. ios-kit alias'ını ekle
+if ! grep -q "ios-claude-kit" "$HOME/.zshrc" 2>/dev/null; then
+  echo '\nalias ios-kit="bash $HOME/.ios-claude-kit/bin/ios-kit.sh"' >> ~/.zshrc
+  echo "✅ ios-kit komutu eklendi"
+else
+  echo "⚠️  ios-kit zaten tanımlı, atlandı"
 fi
 
-echo "🎉 Kurulum tamam! Terminal'i yeniden başlat."
+# 3. personal/ alt klasörlerini oluştur
+mkdir -p "$KIT/personal/skills"
+mkdir -p "$KIT/personal/hooks/post-tool-use"
+mkdir -p "$KIT/personal/hooks/stop"
+echo "✅ personal/ klasörü hazırlandı"
+
+# 4. Örnekleri kopyala
+echo ""
+echo "💡 examples/ klasöründe hazır hook ve skill'ler var."
+echo "   Bunları personal/ klasörüne kopyalamak ister misin?"
+echo -n "   (y/n): "
+read -r ANSWER
+
+if [ "$ANSWER" = "y" ]; then
+  cp -r "$KIT/examples/hooks/"* "$KIT/personal/hooks/"
+  cp -r "$KIT/examples/skills/"* "$KIT/personal/skills/"
+  chmod +x "$KIT"/personal/hooks/**/*.sh 2>/dev/null
+  echo "✅ Örnekler personal'a kopyalandı"
+  echo "   Düzenlemek için: $KIT/personal/"
+else
+  echo "⏭️  Atlandı, istediğinde manuel kopyalayabilirsin"
+  echo "   examples/: $KIT/examples/"
+fi
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "🎉 Kurulum tamam!"
+echo ""
+echo "Terminali yeniden başlat, sonra:"
+echo "  cd <proje klasörü>"
+echo "  ios-kit setup"

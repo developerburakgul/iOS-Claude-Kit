@@ -1,0 +1,91 @@
+# {{PROJECT_NAME}}
+
+> Claude Code için proje rehberi — {{DATE}}
+
+---
+
+## Proje Hakkında
+
+{{PROJECT_NAME}} bir iOS uygulamasıdır.
+
+- **Hedef kitle:** Global kullanıcılar
+- **Platform:** iOS
+- **Dil:** Swift
+- **Minimum iOS:** 17.0
+- **Monetizasyon:** RevenueCat (Freemium)
+
+---
+
+## Teknik Stack
+
+- **Mimari:** MVVM
+- **UI:** SwiftUI
+- **Async:** Swift Concurrency (async/await)
+- **Backend:** Firebase (Firestore, Auth, Remote Config)
+- **Monetizasyon:** RevenueCat
+- **Analytics:** (ekle)
+- **Dependency Manager:** Swift Package Manager
+
+---
+
+## Klasör Yapısı
+
+{{PROJECT_NAME}}/
+├── App/
+│   ├── AppEntry.swift
+│   └── AppDelegate.swift
+├── Core/
+│   ├── Network/
+│   ├── Storage/
+│   └── Extensions/
+├── Features/
+│   ├── Onboarding/
+│   ├── Home/
+│   └── Settings/
+├── Components/
+├── Resources/
+│   ├── Assets.xcassets
+│   └── Localizable.strings
+└── Supporting Files/
+
+---
+
+## Kurallar
+
+**Genel**
+- Her feature kendi klasöründe, kendi ViewModel'i ile
+- God class yasak, bir class bir sorumluluk
+- Magic number yasak, constant kullan
+- Force unwrap yasak, guard let veya if let kullan
+
+**Naming**
+- ViewModel: `HomeViewModel`
+- View: `HomeView`
+- Model: `User`, `Session`
+- Protocol: `AuthServiceProtocol`
+
+**SwiftUI**
+- Preview her View'da olmalı
+- View'lar 100 satırı geçmesin, parçala
+- @Observable kullan, ObservableObject değil
+
+**Git**
+- Commit mesajı: `feat: kullanıcı girişi eklendi`
+- Branch: `feature/login`, `fix/crash-on-launch`
+
+---
+
+## Skills
+
+{{KIT_DIR}}/core/skills/swift-mvvm/SKILL.md
+{{KIT_DIR}}/core/skills/firebase/SKILL.md
+{{KIT_DIR}}/core/skills/revenuecat/SKILL.md
+
+---
+
+## Yapılmaması Gerekenler
+
+- UIKit kullanma, her şey SwiftUI
+- Singleton kullanma, dependency injection tercih et
+- Main thread'i bloklama
+- Firestore'a direkt UI'dan yazma, her zaman ViewModel üzerinden
