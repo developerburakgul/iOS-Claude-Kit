@@ -107,6 +107,25 @@ else
   echo "✅ .gitignore oluşturuldu"
 fi
 
+# 8. Bağımlılık kontrolü
+echo ""
+if command -v swiftlint &>/dev/null; then
+  echo "✅ SwiftLint bulundu"
+else
+  echo "⚠️  SwiftLint bulunamadı — swiftlint hook'u sessizce atlanacak"
+  echo -n "   Şimdi kurmak ister misin? (y/n): "
+  read -r INSTALL_LINT
+  INSTALL_LINT="$(echo "$INSTALL_LINT" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')"
+  if [ "$INSTALL_LINT" = "y" ] || [ "$INSTALL_LINT" = "yes" ]; then
+    if command -v brew &>/dev/null; then
+      brew install swiftlint
+      echo "✅ SwiftLint kuruldu"
+    else
+      echo "❌ Homebrew bulunamadı. Manuel kur: brew install swiftlint"
+    fi
+  fi
+fi
+
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "🎉 $PROJECT_NAME hazır!"
