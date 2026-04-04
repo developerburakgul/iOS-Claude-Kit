@@ -86,7 +86,15 @@ else
   echo "✅ CLAUDE.md oluşturuldu"
 fi
 
-# 7. .gitignore'a .claude-kit/ ve settings.local.json ekle
+# 7. .swiftlint.yml oluştur (yoksa)
+if [ -f "$PROJECT_DIR/.swiftlint.yml" ]; then
+  echo "⚠️  .swiftlint.yml zaten var, atlanıyor"
+else
+  cp "$KIT_DIR/core/templates/.swiftlint.yml" "$PROJECT_DIR/.swiftlint.yml"
+  echo "✅ .swiftlint.yml oluşturuldu"
+fi
+
+# 8. .gitignore'a .claude-kit/ ve settings.local.json ekle
 GITIGNORE_LINES=".claude-kit/
 .claude/settings.local.json"
 
