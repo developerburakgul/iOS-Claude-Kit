@@ -43,7 +43,17 @@ mkdir -p "$CLAUDE_DIR"
 cat > "$CLAUDE_DIR/settings.json" <<'SETTINGS'
 {
   "hooks": {
-    "PreToolUse": [],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude-kit/core/hooks/pre-tool-use/protect-files.sh"
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Write|Edit",
