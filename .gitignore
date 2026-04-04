@@ -5,5 +5,5 @@ personal/*
 # Kit geliştirme sırasında kullanılan local settings
 .claude/settings.local.json
 
-# Kit'i kullanan projelerin CLAUDE.md'si
+# Bu repo'nun kendi CLAUDE.md'si (geliştirici notu, public'e gitmez)
 CLAUDE.md

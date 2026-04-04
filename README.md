@@ -2,90 +2,119 @@
 
 A reusable Claude Code toolkit for iOS projects. One kit, every project.
 
-Instead of setting up Claude Code from scratch for each iOS project, install this kit once and run a single command to get your project ready — with hooks, skills, and a pre-configured `CLAUDE.md`.
+Drop it into any iOS project to get pre-configured hooks, skills, and a `CLAUDE.md` — no global install, no submodules. The kit lives in `.claude-kit/` (gitignored), so each project stays clean.
 
-## Install
+## Quick Start
 
-```bash
-git clone https://github.com/developerburakgul/iOS-Claude-Kit.git ~/.ios-claude-kit
-cd ~/.ios-claude-kit
-bash install.sh
-```
-
-Restart your terminal after installation.
-
-## Usage
-
-### Set up a project
+In your iOS project root:
 
 ```bash
-cd ~/Projects/MyApp
-ios-kit setup
+git clone --depth 1 https://github.com/developerburakgul/iOS-Claude-Kit.git .claude-kit
+bash .claude-kit/setup.sh
 ```
 
-This creates two files in your project:
+That's it. Now run `claude` in your project.
 
-- `.claude/settings.json` — hook configurations
-- `CLAUDE.md` — project context for Claude (Swift conventions, architecture rules, etc.)
+### What happens
 
-### Other commands
+```
+MyApp/
+  .claude-kit/                  ← the kit (gitignored, not committed)
+  .claude/
+    settings.json               ← core hook config (committed, shared with team)
+    settings.local.json         ← personal hook config (gitignored, just for you)
+  CLAUDE.md                     ← project context for Claude (committed)
+  .gitignore                    ← updated automatically
+```
+
+### For teammates
+
+When a teammate clones your project, they run the same two commands:
 
 ```bash
-ios-kit update   # pull latest changes from the kit
-ios-kit skills   # list available skills
-ios-kit help     # show all commands
+git clone --depth 1 https://github.com/developerburakgul/iOS-Claude-Kit.git .claude-kit
+bash .claude-kit/setup.sh
 ```
 
-## How It Works
+`settings.json` and `CLAUDE.md` are already in git — setup detects them and only downloads the kit.
 
-### Project Structure
+### Updating the kit
 
-```
-~/.ios-claude-kit/
-├── bin/
-│   ├── ios-kit.sh             # CLI entry point
-│   └── setup-project.sh       # Project setup script
-├── core/
-│   ├── hooks/                 # Shared team hooks (empty by default)
-│   │   ├── pre-tool-use/      # Runs before Claude writes/edits files
-│   │   ├── post-tool-use/     # Runs after Claude writes/edits files
-│   │   └── stop/              # Runs when Claude finishes its turn
-│   └── templates/
-│       └── CLAUDE.md.template # Template for project CLAUDE.md
-├── examples/
-│   └── hooks/                 # Ready-to-use example hooks
-│       └── stop/
-│           └── notify-waiting.sh
-├── personal/                  # Your custom hooks/skills (gitignored)
-└── install.sh
+```bash
+rm -rf .claude-kit
+git clone --depth 1 https://github.com/developerburakgul/iOS-Claude-Kit.git .claude-kit
+bash .claude-kit/setup.sh
 ```
 
-### Hooks
+---
+
+## Hooks
 
 Hooks are shell scripts that Claude Code runs at specific moments. Each hook is a single `.sh` file that does one thing.
 
-#### Hook Events
+### How hooks work
 
-| Event | When | Use Case |
-|-------|------|----------|
+| Event | When it runs | Use case |
+|-------|-------------|----------|
 | `PreToolUse` | Before Claude calls a tool | Block unwanted patterns, enforce rules |
 | `PostToolUse` | After a tool runs | Lint checks, build verification |
 | `Stop` | Claude finishes its turn | Notifications, summaries |
 
-#### Hook I/O
+Every hook receives JSON on stdin and can return JSON on stdout:
 
 ```
-stdin  → JSON (tool_name, tool_input)
-stdout → JSON (decision, reason)
+stdin  → {"tool_name": "Edit", "tool_input": {"file_path": "...", ...}}
+stdout → {"decision": "block", "reason": "Why it was blocked"}
 exit 0 → allow
 exit 2 → block (reason is shown to Claude)
 ```
 
-#### Adding a Hook
+### Core hooks vs personal hooks
+
+| | Core | Personal |
+|---|---|---|
+| Scripts in | `.claude-kit/core/hooks/` | `.claude-kit/personal/hooks/` |
+| Config in | `.claude/settings.json` | `.claude/settings.local.json` |
+| In git? | `settings.json` yes, kit no | No |
+| Who sees it | Everyone on the team | Only you |
+| How to add | Add to kit repo + `setup.sh` | Edit `settings.local.json` locally |
+
+Claude Code merges both files — core and personal hooks run together.
+
+### Matchers
+
+Matchers filter which tools trigger a hook:
+
+```
+Write|Edit          → file write/edit operations
+Bash(git commit:*)  → git commit commands
+Bash(git push:*)    → git push commands
+.*                  → everything
+```
+
+---
+
+## Included Hooks
+
+### `core/hooks/post-tool-use/swiftlint.sh`
+
+Runs SwiftLint on `.swift` files after Claude edits them. If there are lint issues, they're reported back to Claude so it can fix them automatically.
+
+- Triggers on: `Write|Edit`
+- Skips silently if SwiftLint is not installed
+- Skips non-Swift files
+
+---
+
+## Adding a Core Hook
+
+Core hooks apply to everyone on the team. They live in the kit repo.
 
 **Step 1 — Write the script**
 
-Create a `.sh` file in `core/hooks/<event>/`. Example: `core/hooks/pre-tool-use/no-force-unwrap.sh`
+Create a `.sh` file in `core/hooks/<event>/`.
+
+Example — block force unwraps (`core/hooks/pre-tool-use/no-force-unwrap.sh`):
 
 ```bash
 #!/bin/bash
@@ -100,9 +129,9 @@ fi
 exit 0
 ```
 
-**Step 2 — Register it in `bin/setup-project.sh`**
+**Step 2 — Register it in `setup.sh`**
 
-Open `bin/setup-project.sh` and add your hook to the settings.json block under the right event and matcher:
+Open `setup.sh` in the kit repo. Find the settings.json block and add your hook under the right event:
 
 ```json
 "PreToolUse": [
@@ -111,100 +140,109 @@ Open `bin/setup-project.sh` and add your hook to the settings.json block under t
     "hooks": [
       {
         "type": "command",
-        "command": "bash $KIT/core/hooks/pre-tool-use/no-force-unwrap.sh"
+        "command": "bash .claude-kit/core/hooks/pre-tool-use/no-force-unwrap.sh"
       }
     ]
   }
 ]
 ```
 
-Each hook entry needs:
-- `matcher` — which tools trigger this hook (see Matchers below)
-- `type` — always `"command"`
-- `command` — path to your script (`$KIT` expands to `~/.ios-claude-kit`)
+Each entry needs:
+- **`matcher`** — which tools trigger this hook
+- **`type`** — always `"command"`
+- **`command`** — relative path from project root
 
-**Step 3 — Apply to your project**
+**Step 3 — Apply**
+
+In your project, update the kit and re-run setup:
 
 ```bash
-ios-kit setup
+rm -rf .claude-kit
+git clone --depth 1 https://github.com/developerburakgul/iOS-Claude-Kit.git .claude-kit
+bash .claude-kit/setup.sh
 ```
 
-This regenerates `.claude/settings.json` in your project with the new hook.
+---
 
-#### Matchers
+## Adding a Personal Hook
 
-Matchers filter which tools trigger a hook:
+Personal hooks are just for you. They don't affect teammates.
 
+**Step 1 — Write or copy the script**
+
+```bash
+# Copy an example
+cp .claude-kit/examples/hooks/stop/notify-waiting.sh .claude-kit/personal/hooks/stop/
+
+# Or write your own
+vim .claude-kit/personal/hooks/stop/my-hook.sh
 ```
-Write|Edit          → file write/edit operations
-Bash(git commit:*)  → git commit commands
-Bash(git push:*)    → git push commands
-.*                  → everything
+
+**Step 2 — Register it in `.claude/settings.local.json`**
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [],
+    "PostToolUse": [],
+    "Stop": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude-kit/personal/hooks/stop/notify-waiting.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
 ```
 
-### Example Hooks
+No re-run needed — Claude Code picks up changes to `settings.local.json` immediately.
 
-The `examples/` directory contains ready-to-use hooks. You can copy them to `personal/` during installation, or manually anytime.
+---
 
-#### `examples/hooks/stop/notify-waiting.sh`
+## Example Hooks
 
-Sends a macOS notification with sound when Claude finishes and is waiting for your input. Useful when you're working in another window.
+Ready-to-use hooks in the `examples/` directory. Copy to `personal/` to activate.
+
+### `examples/hooks/stop/notify-waiting.sh`
+
+Sends a macOS notification with sound when Claude finishes its turn. Useful when you're working in another window and don't want to keep checking.
 
 ```bash
 #!/bin/bash
-osascript -e 'display notification "Cevap hazır, seni bekliyor." with title "Claude Code" sound name "Glass"'
+osascript -e 'display notification "Ready for input." with title "Claude Code" sound name "Glass"'
 ```
 
-**To activate manually:**
-
+Activate:
 ```bash
-cp ~/.ios-claude-kit/examples/hooks/stop/notify-waiting.sh ~/.ios-claude-kit/personal/hooks/stop/
+cp .claude-kit/examples/hooks/stop/notify-waiting.sh .claude-kit/personal/hooks/stop/
 ```
+Then add to `.claude/settings.local.json` (see Adding a Personal Hook above).
 
-Then add the hook to your project's `.claude/settings.json`:
+---
 
-```json
-"Stop": [
-  {
-    "matcher": ".*",
-    "hooks": [
-      {
-        "type": "command",
-        "command": "bash ~/.ios-claude-kit/personal/hooks/stop/notify-waiting.sh"
-      }
-    ]
-  }
-]
-```
+## CLAUDE.md Template
 
-### Personal Hooks
+The template at `core/templates/CLAUDE.md.template` generates each project's `CLAUDE.md`. Default config:
 
-The `personal/` directory is gitignored. Put your own hooks and skills here — they won't affect the shared repo. You can also copy examples here during installation.
+- **Platform:** iOS 17+, Swift, SwiftUI
+- **Architecture:** MVVM
+- **Backend:** Firebase
+- **Rules:** No force unwrap, no singletons, no god classes, @Observable over ObservableObject
 
-## Customization
+Edit the template in the kit repo to match your team's conventions. Changes apply next time `setup.sh` runs (only if `CLAUDE.md` doesn't already exist in the project).
 
-### CLAUDE.md Template
-
-The template at `core/templates/CLAUDE.md.template` defines what goes into each project's `CLAUDE.md`. It includes:
-
-- Project metadata (iOS, Swift, SwiftUI)
-- Architecture rules (MVVM)
-- Coding conventions (no force unwrap, no singletons, etc.)
-- Git commit/branch naming
-
-Edit the template to match your team's conventions.
+---
 
 ## Uninstall
 
 ```bash
-# Remove the kit
-rm -rf ~/.ios-claude-kit
-
-# Remove the alias from .zshrc
-# Delete the line: alias ios-kit="bash $HOME/.ios-claude-kit/bin/ios-kit.sh"
+rm -rf .claude-kit .claude/settings.json .claude/settings.local.json CLAUDE.md
 ```
-
-In each project, delete `.claude/settings.json` and `CLAUDE.md` if you no longer need them.
 
 ## License
 
