@@ -94,15 +94,60 @@ Bash(git push:*)    → git push commands
 
 ---
 
-## Included Hooks
+## Included Core Hooks
 
-### `core/hooks/post-tool-use/swiftlint.sh`
+These hooks are active in every project that runs `setup.sh`.
 
-Runs SwiftLint on `.swift` files after Claude edits them. If there are lint issues, they're reported back to Claude so it can fix them automatically.
+### `protect-files.sh` — Block edits to protected files
 
-- Triggers on: `Write|Edit`
+Prevents Claude from editing files that should not be modified manually. Triggers on `Write|Edit`.
+
+| Category | Protected files |
+|----------|----------------|
+| Xcode project | `.pbxproj`, `.xcworkspace`, `xcuserdata/`, `DerivedData/` |
+| App metadata | `Info.plist`, `.entitlements` |
+| Asset catalog | `Assets.xcassets/Contents.json` |
+| Lock files | `Package.resolved`, `Podfile.lock` |
+| Sensitive config | `GoogleService-Info.plist`, `Secrets.swift`, `.env*` |
+| Certificates | `.p12`, `.mobileprovision`, `.cer` |
+| Git / Kit | `.git/`, `.claude-kit/core/` |
+
+### `safe-git.sh` — Block dangerous git commands
+
+Prevents irreversible git operations. Triggers on `Bash`.
+
+| Blocked | Why |
+|---------|-----|
+| `push --force` / `push -f` | Overwrites remote history |
+| `reset --hard` | Deletes uncommitted changes |
+| `branch -D` | Force-deletes branch |
+| `checkout -- .` | Discards all changes |
+| `clean -f` / `clean -fd` | Deletes untracked files |
+| `stash clear` | Drops all stashes |
+| `remote remove` / `remote rm` | Removes remote |
+| `push --delete` / `push :refs/` | Deletes remote tag/branch |
+
+### `safe-bash.sh` — Block dangerous shell commands
+
+Prevents system-damaging commands. Triggers on `Bash`.
+
+| Blocked | Why |
+|---------|-----|
+| `rm -rf /` / `rm -rf ~` / `rm -rf .` | Catastrophic deletion |
+| `sudo` | Claude should not have root access |
+| `chmod 777` | Removes all file security |
+| `curl\|sh` / `wget\|bash` | Remote code execution risk |
+| `killall` / `pkill -9` | Kills processes indiscriminately |
+| `rm -rf *.xcodeproj` / `*.xcworkspace` | Xcode project deletion |
+| `dd if=` / `mkfs.` / `fdisk` | Disk/partition operations |
+
+### `swiftlint.sh` — Lint Swift files after edits
+
+Runs SwiftLint on `.swift` files after Claude edits them. Blocks and reports issues so Claude fixes them automatically. Triggers on `Write|Edit`.
+
 - Skips silently if SwiftLint is not installed
 - Skips non-Swift files
+- Setup offers to install SwiftLint via Homebrew if missing
 
 ---
 
@@ -206,22 +251,61 @@ No re-run needed — Claude Code picks up changes to `settings.local.json` immed
 
 ## Example Hooks
 
-Ready-to-use hooks in the `examples/` directory. Copy to `personal/` to activate.
+Ready-to-use hooks in `examples/`. These are project-specific — copy to `personal/` and register in `settings.local.json` to activate.
+
+### `examples/hooks/pre-tool-use/commit-format.sh`
+
+Enforces [Conventional Commits](https://www.conventionalcommits.org/) format on commit messages.
+
+```
+feat: add user login screen       ← allowed
+fix: crash on launch              ← allowed
+updated something                 ← blocked
+```
+
+Allowed prefixes: `feat`, `fix`, `chore`, `docs`, `style`, `refactor`, `test`, `perf`, `ci`, `build`, `revert`. Edit the `PREFIXES` variable in the script to customize.
+
+### `examples/hooks/pre-tool-use/branch-naming.sh`
+
+Enforces branch naming conventions when creating new branches.
+
+```
+feature/user-login                ← allowed
+fix/crash-on-launch               ← allowed
+my-branch                         ← blocked
+```
+
+Allowed prefixes: `feature/`, `fix/`, `hotfix/`, `bugfix/`, `release/`, `chore/`, `refactor/`, `test/`, `docs/`. Edit `ALLOWED_PREFIXES` to customize.
 
 ### `examples/hooks/stop/notify-waiting.sh`
 
-Sends a macOS notification with sound when Claude finishes its turn. Useful when you're working in another window and don't want to keep checking.
+Sends a macOS notification with sound when Claude finishes its turn. Useful when you're working in another window.
 
+### Activating an example hook
+
+1. Copy to personal:
 ```bash
-#!/bin/bash
-osascript -e 'display notification "Ready for input." with title "Claude Code" sound name "Glass"'
+cp .claude-kit/examples/hooks/pre-tool-use/commit-format.sh .claude-kit/personal/hooks/pre-tool-use/
 ```
 
-Activate:
-```bash
-cp .claude-kit/examples/hooks/stop/notify-waiting.sh .claude-kit/personal/hooks/stop/
+2. Add to `.claude/settings.local.json`:
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude-kit/personal/hooks/pre-tool-use/commit-format.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
 ```
-Then add to `.claude/settings.local.json` (see Adding a Personal Hook above).
 
 ---
 
