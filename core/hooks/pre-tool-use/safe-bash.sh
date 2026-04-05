@@ -34,10 +34,10 @@ BLOCKED_PATTERNS=(
   "fdisk"
 
   # Ağ/download ve çalıştırma — güvenlik riski
-  "curl.*| *sh"
-  "curl.*| *bash"
-  "wget.*| *sh"
-  "wget.*| *bash"
+  "curl.*\| *sh"
+  "curl.*\| *bash"
+  "wget.*\| *sh"
+  "wget.*\| *bash"
 
   # Process kill all
   "killall"
