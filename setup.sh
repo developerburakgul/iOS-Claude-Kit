@@ -52,6 +52,19 @@ cat > "$CLAUDE_DIR/settings.json" <<'SETTINGS'
             "command": "bash .claude-kit/core/hooks/pre-tool-use/protect-files.sh"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude-kit/core/hooks/pre-tool-use/safe-git.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude-kit/core/hooks/pre-tool-use/safe-bash.sh"
+          }
+        ]
       }
     ],
     "PostToolUse": [
