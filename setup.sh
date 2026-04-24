@@ -78,7 +78,17 @@ cat > "$CLAUDE_DIR/settings.json" <<'SETTINGS'
         ]
       }
     ],
-    "Stop": []
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude-kit/core/hooks/stop/xcode-build.sh"
+          }
+        ]
+      }
+    ]
   }
 }
 SETTINGS
@@ -100,7 +110,20 @@ else
   echo "⚠️  .claude/settings.local.json zaten var, atlanıyor"
 fi
 
-# 6. CLAUDE.md oluştur
+# 6. Skills'leri .claude/skills/ dizinine kopyala
+mkdir -p "$CLAUDE_DIR/skills"
+if [ -d "$KIT_DIR/core/skills" ]; then
+  for SKILL_DIR in "$KIT_DIR"/core/skills/*/; do
+    SKILL_NAME=$(basename "$SKILL_DIR")
+    if [ -f "$SKILL_DIR/SKILL.md" ]; then
+      mkdir -p "$CLAUDE_DIR/skills/$SKILL_NAME"
+      cp "$SKILL_DIR/SKILL.md" "$CLAUDE_DIR/skills/$SKILL_NAME/SKILL.md"
+    fi
+  done
+  echo "✅ Skills kopyalandı (.claude/skills/)"
+fi
+
+# 7. CLAUDE.md oluştur
 if [ -f "$PROJECT_DIR/CLAUDE.md" ]; then
   echo "⚠️  CLAUDE.md zaten var, atlanıyor"
 else
@@ -109,7 +132,7 @@ else
   echo "✅ CLAUDE.md oluşturuldu"
 fi
 
-# 7. .swiftlint.yml oluştur (yoksa)
+# 8. .swiftlint.yml oluştur (yoksa)
 if [ -f "$PROJECT_DIR/.swiftlint.yml" ]; then
   echo "⚠️  .swiftlint.yml zaten var, atlanıyor"
 else
@@ -117,7 +140,7 @@ else
   echo "✅ .swiftlint.yml oluşturuldu"
 fi
 
-# 8. .gitignore'a .claude-kit/ ve settings.local.json ekle
+# 9. .gitignore'a .claude-kit/ ve settings.local.json ekle
 GITIGNORE_LINES=".claude-kit/
 .claude/settings.local.json"
 
@@ -138,7 +161,7 @@ else
   echo "✅ .gitignore oluşturuldu"
 fi
 
-# 8. Bağımlılık kontrolü
+# 10. Bağımlılık kontrolü
 echo ""
 if command -v swiftlint &>/dev/null; then
   echo "✅ SwiftLint bulundu"
