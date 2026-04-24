@@ -157,7 +157,7 @@ if [ -f "$PROJECT_DIR/.gitignore" ]; then
     echo "✅ .gitignore güncellendi"
   fi
 else
-  echo -e "# Claude Kit (setup.sh ile indirilir)\n$GITIGNORE_LINES" > "$PROJECT_DIR/.gitignore"
+  echo -e "\n# Claude Kit (setup.sh ile indirilir)\n$GITIGNORE_LINES" >> "$PROJECT_DIR/.gitignore"
   echo "✅ .gitignore oluşturuldu"
 fi
 
