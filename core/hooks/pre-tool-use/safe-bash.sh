@@ -14,11 +14,8 @@ fi
 
 BLOCKED_PATTERNS=(
   # Tehlikeli silme
-  "rm -rf /"
-  "rm -rf ~"
-  "rm -rf \."
-  "rm -rf \*"
-  "rmdir /"
+  "^\s*rm\s"
+  "^\s*rmdir\s"
 
   # Sudo — Claude'un root yetkisi olmamalı
   "^\s*sudo "
