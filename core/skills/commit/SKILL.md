@@ -1,13 +1,13 @@
 ---
 name: commit
-description: Conventional Commits v1.0.0 spesifikasyonuna göre commit oluşturur. Değişiklikleri analiz eder, uygun type ve scope belirler, commit mesajı önerir.
+description: Creates commits following Conventional Commits v1.0.0 specification. Analyzes changes, determines appropriate type and scope, and proposes a commit message.
 user-invocable: true
-argument-hint: "mesaj"
+argument-hint: "message"
 ---
 
 # Conventional Commits v1.0.0
 
-## Commit Formatı
+## Commit Format
 
 ```
 <type>(<scope>): <description>
@@ -17,41 +17,41 @@ argument-hint: "mesaj"
 [optional footer(s)]
 ```
 
-### Kurallar
+### Rules
 
-1. **type** zorunludur
-2. **scope** opsiyoneldir, parantez içinde yazılır: `feat(auth): ...`
-3. **description** zorunludur, type'dan sonra `: ` (iki nokta + boşluk) ile ayrılır
-4. **description** küçük harfle başlar, sonunda nokta yok
-5. **body** opsiyoneldir, description'dan bir boş satır sonra başlar
-6. **footer** opsiyoneldir, body'den bir boş satır sonra başlar, `token: value` veya `token #value` formatında
-7. **BREAKING CHANGE** belirtmek için: footer'a `BREAKING CHANGE: açıklama` yaz VEYA type'dan sonra `!` ekle: `feat!: ...`
+1. **type** is required
+2. **scope** is optional, written in parentheses: `feat(auth): ...`
+3. **description** is required, separated from type by `: ` (colon + space)
+4. **description** starts with lowercase, no period at the end
+5. **body** is optional, starts after a blank line following the description
+6. **footer** is optional, starts after a blank line following the body, in `token: value` or `token #value` format
+7. To indicate a **BREAKING CHANGE**: add `BREAKING CHANGE: description` in the footer OR append `!` after the type: `feat!: ...`
 
 ---
 
-## İzin Verilen Type'lar
+## Allowed Types
 
-| Type | Açıklama |
+| Type | Description |
 |---|---|
-| `feat` | Yeni özellik (SemVer MINOR) |
-| `fix` | Bug düzeltme (SemVer PATCH) |
-| `docs` | Sadece dokümantasyon değişikliği |
-| `style` | Kod davranışını etkilemeyen format değişiklikleri (boşluk, noktalama vb.) |
-| `refactor` | Bug düzeltmeyen ve özellik eklemeyen kod değişikliği |
-| `perf` | Performans iyileştirmesi |
-| `test` | Test ekleme veya düzeltme |
-| `build` | Build sistemi veya dış bağımlılık değişiklikleri (SPM, CocoaPods vb.) |
-| `ci` | CI konfigürasyon dosyaları ve script'leri |
-| `chore` | Kaynak kodu değiştirmeyen bakım işleri |
-| `revert` | Önceki bir commit'i geri alma |
+| `feat` | New feature (SemVer MINOR) |
+| `fix` | Bug fix (SemVer PATCH) |
+| `docs` | Documentation-only changes |
+| `style` | Formatting changes that don't affect code behavior (whitespace, punctuation, etc.) |
+| `refactor` | Code change that neither fixes a bug nor adds a feature |
+| `perf` | Performance improvement |
+| `test` | Adding or fixing tests |
+| `build` | Build system or external dependency changes (SPM, CocoaPods, etc.) |
+| `ci` | CI configuration files and scripts |
+| `chore` | Maintenance tasks that don't modify source code |
+| `revert` | Reverting a previous commit |
 
 ---
 
-## Adımlar
+## Steps
 
-Bu skill çağrıldığında şu adımları izle:
+Follow these steps when this skill is invoked:
 
-### 1. Değişiklikleri analiz et
+### 1. Analyze changes
 
 ```bash
 git status
@@ -59,54 +59,54 @@ git diff --staged
 git diff
 ```
 
-- Eğer stage'lenmiş değişiklik varsa sadece onları commit et.
-- Eğer stage'lenmiş değişiklik yoksa, unstaged değişiklikleri göster ve kullanıcıya hangi dosyaları stage'lemek istediğini sor.
-- Eğer hiç değişiklik yoksa kullanıcıyı bilgilendir ve dur.
+- If there are staged changes, commit only those.
+- If there are no staged changes, show the unstaged changes and ask the user which files they want to stage.
+- If there are no changes at all, inform the user and stop.
 
-### 2. Commit mesajı oluştur
+### 2. Create the commit message
 
-Değişiklikleri analiz edip uygun type'ı seç:
+Analyze the changes and select the appropriate type:
 
-- **Yeni dosya/özellik eklendiyse** → `feat`
-- **Bug düzeltildiyse** → `fix`
-- **Sadece README/CLAUDE.md değiştiyse** → `docs`
-- **Sadece test eklendiyse/değiştiyse** → `test`
-- **Mevcut kod davranışı değişmeden yeniden yapılandırıldıysa** → `refactor`
-- **Performans iyileştirmesiyse** → `perf`
-- **Build/dependency değişikliğiyse** → `build`
-- **Format/whitespace değişikliğiyse** → `style`
-- **CI dosyaları değiştiyse** → `ci`
-- **Diğer bakım işleriyse** → `chore`
+- **New file/feature added** → `feat`
+- **Bug fixed** → `fix`
+- **Only README/CLAUDE.md changed** → `docs`
+- **Only tests added/modified** → `test`
+- **Existing code restructured without behavior change** → `refactor`
+- **Performance improvement** → `perf`
+- **Build/dependency change** → `build`
+- **Formatting/whitespace change** → `style`
+- **CI files changed** → `ci`
+- **Other maintenance tasks** → `chore`
 
-**Scope belirleme (opsiyonel):**
-- Değişiklik tek bir modül/feature'a aitse scope ekle: `feat(onboarding): ...`
-- Birden fazla alanı kapsıyorsa scope kullanma: `feat: ...`
+**Determining scope (optional):**
+- If the change belongs to a single module/feature, add a scope: `feat(onboarding): ...`
+- If it spans multiple areas, omit the scope: `feat: ...`
 
-**Description yazımı:**
-- İngilizce yaz
-- Küçük harfle başla
-- Emir kipi kullan ("add", "fix", "update" — "added", "fixed" değil)
-- Sonunda nokta koyma
-- Kısa ve net tut (50 karakter altı)
+**Writing the description:**
+- Write in English
+- Start with lowercase
+- Use imperative mood ("add", "fix", "update" — not "added", "fixed")
+- No period at the end
+- Keep it short and clear (under 50 characters)
 
-### 3. Son commit mesajlarıyla uyumu kontrol et
+### 3. Check consistency with recent commits
 
 ```bash
 git log --oneline -10
 ```
 
-Mevcut commit geçmişindeki dil ve stil ile tutarlı ol.
+Stay consistent with the language and style of the existing commit history.
 
-### 4. Kullanıcıya onayla ve commit et
+### 4. Confirm with the user and commit
 
-Oluşturduğun commit mesajını kullanıcıya göster ve onayını al. Onay gelince:
+Show the proposed commit message to the user and get their approval. Once approved:
 
 ```bash
-git add <dosyalar>
+git add <files>
 git commit -m "<type>(<scope>): <description>"
 ```
 
-Eğer body veya footer gerekiyorsa HEREDOC kullan:
+If body or footer is needed, use a HEREDOC:
 
 ```bash
 git commit -m "$(cat <<'EOF'
@@ -121,7 +121,7 @@ EOF
 
 ---
 
-## Örnekler
+## Examples
 
 ```
 feat: add user authentication flow
@@ -151,11 +151,11 @@ favors local changes over server changes
 
 ---
 
-## Yapma
+## Don'ts
 
-- Stage'lenmemiş dosyaları sormadan commit etme
-- `git add .` veya `git add -A` kullanma — dosyaları tek tek ekle
-- `.env`, credentials veya secret içeren dosyaları commit etme
-- `--no-verify` kullanma
-- `--amend` kullanma (kullanıcı açıkça istemediği sürece)
-- Boş commit oluşturma
+- Don't commit unstaged files without asking first
+- Don't use `git add .` or `git add -A` — add files individually
+- Don't commit `.env`, credentials, or files containing secrets
+- Don't use `--no-verify`
+- Don't use `--amend` (unless the user explicitly requests it)
+- Don't create empty commits
